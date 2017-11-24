@@ -1,8 +1,9 @@
-void turn(float degrees, int motorPort, int pow)
+void turn(float degrees, int gearRatio, int motorPort)
 {
-
-	motor[motorPort] = pow;
-	while(fabs(degrees - nMotorEncoder(motorPort))>0)
+	int initialEncoder = nMotorEncoder[motorPort];
+	int tolerance = 3;
+	motor[motorPort] = 40;
+	while(fabs(degrees - fabs(nMotorEncoder[motorPort] - initialEncoder)*gearRatio) > tolerance)
 	{}
 	motor[motorPort] = 0;
 }
