@@ -34,6 +34,46 @@ int findPower(float gyroVelocity)
 	return true;
 }*/
 
+float findAngle(float gyroAngle, float nmotorencoder, int axisFlip)
+ {
+ 	float angleDiff = 0;
+ 
+ 	if(axisFlip < 0 && gyroAngle - nmotorencoder > 0)
+ 		angleDiff = gyroAngle - nmotorencoder;
+	else if (axisFlip < 0 && gyroAngle - nmotorencoder < 0)
+		angleDiff = nmotorencoder - gyroAngle;
+	
+ 	else if (axisFlip > 0 && gyroAngle - nmotorencoder < 0)
+		angleDiff = gyroAngle - nmotorencoder;
+ 	else if (axisFlip > 0 && gyroAngle - nmotorencoder > 0)
+		angleDiff = nmotorencoder - gyroAngle;
+ 
+ 	return angleDiff;
+ }
+ 
+ void displayValues(float gyroAngle, float nmotorEncoder)
+ {
+ 	bool progOn = true;
+ 	while(progOn == true)
+ 	{
+ 		displayBigTextLine(3,"gyroAngle = %.2f, nmotorEncoder = %.2f",gyroAngle,nmotorEnconder);
+ 	}
+ }
+ 
+
+void turn(float degrees, int gearRatio, int motorPort)
+{
+	int initialEncoder = nMotorEncoder[motorPort];
+	int tolerance = 3;
+	if (degrees < 0)
+		motor[motorPort] = -40;
+	if (degrees > 0)
+		motor[motorPort] = 40;
+	while(fabs(fabs(degrees) - fabs(nMotorEncoder[motorPort] - initialEncoder)*gearRatio) > tolerance)
+	{}
+	motor[motorPort] = 0;
+}
+
 float taperDist(int motorPower)
 {
 	int direction = 0;
