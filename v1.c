@@ -1,50 +1,54 @@
+
 typedef struct
 {
 	float degrees;
 	float rate;
 	int motorPort;
 	int sensorPort;
-	int flip;
+	int flip; // takes into account the orientation of the gyro relative to the corresponding motor
 	int gearRatio;
 	float error;
 } axis;
 
-int findPower(int port, float gyroVelocity, char MotorSize)
+
+/* Returns a power that such that the motor moves at a velocity equal in magnitude and opposite in direction to gyro.
+   Ratio was determined experimentally.
+*/
+int findPower(int port, float gyroVelocity, char MotorSize) // by Xianglin Liu
 {
 	int power = 0;
 	float ratio = 10.034;
 	if (MotorSize == 'M')
-	{
 		ratio = 15.897;
-	}
 
 	if (gyroVelocity > 700)
-	{
-			power = -65;
-	}
+		power = -65;
+	
 	else if (gyroVelocity < -700)
-	{
-			power = 65;
-	}
+		power = 65;
 	else
-	{
 		power = gyroVelocity / ratio;
-	}
 
 	return power;
 }
 
-float findEncoderGyroDifference(axis Axis)
+
+// finds the difference in angle between a motor and the corresponding gyro
+float findEncoderGyroDifference(axis Axis) // by Yu Yuan Chang
 {
 	float angDiff = 0;
-	if (Axis.flip > 0)
+	if (Axis.flip > 0) 
 		angDiff = getGyroDegrees(Axis.motorPort) - nMotorEncoder[Axis.motorPort]/Axis.gearRatio;
 	else
 		angDiff = -getGyroDegrees(Axis.motorPort) - nMotorEncoder[Axis.motorPort]/Axis.gearRatio;
 	return angDiff;
 }
 
-bool buttonPress(int & displaymode, int touchSensorPort)
+
+/* when touch sensor activated briefly, will increment displaymode variable
+   if activated for greater than one second, program will end
+*/
+bool buttonPress(int & displaymode, int touchSensorPort) // by Rutvik Pandya
 {
 	bool endProg = false;
 	if(SensorValue(touchSensorPort))
@@ -66,7 +70,9 @@ bool buttonPress(int & displaymode, int touchSensorPort)
 	return endProg;
 }
 
-bool failSafe()
+
+// if device rotates more than the mechanical design allows or to an unsafe angle, function returns true
+bool failSafe() // by Jeffrey Wu
 {
 	if (fabs(getGyroDegrees(S1)) > 100 || fabs(getGyroDegrees(S2)) > 85 || fabs(getGyroDegrees(S3)) > 95)
 		return true;
@@ -74,7 +80,9 @@ bool failSafe()
 		return false;
 }
 
-void displayVars(int mode)
+
+// changes the display mode 
+void displayVars(int mode) // by Xianglin Liu
 {
 	eraseDisplay();
 	if (mode == 1)
@@ -98,7 +106,9 @@ void displayVars(int mode)
 
 }
 
-void tuneKs(float & kp, float & kr, float & ky, float increment)
+
+// when a certain combination of buttons is pressed, the K values are incremented and the display is updated accordingly
+void tuneKs(float & kp, float & kr, float & ky, float increment) // by Rutvik Pandya
 {
 	if(getButtonPress(buttonAny))
 	{
@@ -165,14 +175,16 @@ void tuneKs(float & kp, float & kr, float & ky, float increment)
 
 
 /////////////////////////////////////////////////////////////////////////
-//																																		 //
-//																																		 //
+																																	 //
+																																		 //
 /////////////////////////////////////////////////////////////////////////
-task main()
+
+task main() // by Jeff Wu, Yu Yuan Chang
 {
 
 	setLEDColor(ledRedPulse);
 
+	// intitializing structs for each axis
 	axis pitch;
 	pitch.degrees = 0;
 	pitch.rate = 0;
@@ -200,7 +212,7 @@ task main()
 	yaw.gearRatio = 5;
 	yaw.error = 0;
 
-	/////////////////////////////////////////////////////
+	// initializing sensors
 	SensorType[pitch.sensorPort] = sensorEV3_Gyro;
 	SensorType[roll.sensorPort] = sensorEV3_Gyro;
 	SensorType[yaw.sensorPort] = sensorEV3_Gyro;
@@ -220,7 +232,7 @@ task main()
 	nMotorEncoder[yaw.motorPort] = 0;
 	wait1Msec(1000);
 
-
+	// waits for user to press button connected to touch sensor
 	while(SensorValue(S4) == 0)
 	{}
 	while(SensorValue(S4) == 1)
@@ -245,6 +257,7 @@ task main()
 		roll.rate = getGyroRate(roll.sensorPort);
 		yaw.rate = getGyroRate(yaw.sensorPort);
 
+		// compensates for movement by assigning each motor a power proportional to gyro velocity
 		motor[pitch.motorPort] = pitch.gearRatio*findPower(1,pitch.rate, 'L')*pitch.flip   +   kp*pitch.error;
 		motor[roll.motorPort] = roll.gearRatio*findPower(2,roll.rate, 'L')*roll.flip  +   kr*roll.error;
 		motor[yaw.motorPort] = yaw.gearRatio*findPower(3,yaw.rate, 'M')*yaw.flip   +   ky*yaw.error;
@@ -253,17 +266,14 @@ task main()
 		roll.degrees = getGyroDegrees(roll.sensorPort);
 		yaw.degrees = getGyroDegrees(yaw.sensorPort);
 
+		// finds error, or the difference between the motor encoder and the gyro position
 		if(fabs(pitch.degrees - nMotorEncoder[pitch.motorPort]/pitch.gearRatio) > 1)
-		{
 			pitch.error = findEncoderGyroDifference(pitch);
-		}
+
 		if(fabs(roll.degrees - nMotorEncoder[roll.motorPort]/roll.gearRatio) > 1)
-		{
 			roll.error = findEncoderGyroDifference(roll);
-		}
+		
 		if(fabs(yaw.degrees - nMotorEncoder[yaw.motorPort]/yaw.gearRatio) > 1)
-		{
 			yaw.error = findEncoderGyroDifference(yaw);
-		}
 	}
 }
