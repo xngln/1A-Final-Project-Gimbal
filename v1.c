@@ -189,6 +189,7 @@ task main()
 	roll.sensorPort = S2;
 	roll.flip = -1;
 	roll.gearRatio = 5;
+	roll.error = 0;
 
 	axis yaw;
 	yaw.degrees = 0;
@@ -197,6 +198,7 @@ task main()
 	yaw.sensorPort = S3;
 	yaw.flip = -1;
 	yaw.gearRatio = 5;
+	yaw.error = 0;
 
 	/////////////////////////////////////////////////////
 	SensorType[pitch.sensorPort] = sensorEV3_Gyro;
