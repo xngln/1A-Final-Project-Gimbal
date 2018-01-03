@@ -1,5 +1,5 @@
-
-typedef struct
+//
+typedef struct 
 {
 	float degrees;
 	float rate;
